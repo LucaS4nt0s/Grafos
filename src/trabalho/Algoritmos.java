@@ -75,6 +75,22 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         return grafo;
     }
 
+    private enum Cor{
+        BRANCO,
+        CINZA,
+        PRETO
+    }
+    private int[] distancia;
+    private int[] tempo;
+    private int tempoAtual;
+    private int[] pai;
+    private Cor[] cor;
+
+    private Collection<Aresta> arestasDeArvore;
+    private Collection<Aresta> arestasDeRetorno;
+    private Collection<Aresta> arestasDeAvanco;
+    private Collection<Aresta> arestasDeCruzamento;
+
     @Override
     public Collection<Aresta> buscaEmProfundidade(Grafo g) {
         return null;
