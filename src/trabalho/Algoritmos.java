@@ -8,12 +8,34 @@ import grafos.Grafo;
 import grafos.Vertice;
 import grafos.TipoDeRepresentacao;
 import grafos.FileManager;
+import java.util.Queue;
+import java.util.LinkedList;
     
 public class Algoritmos implements AlgoritmosEmGrafos {
+    
+    private Grafo grafo;
+
+    
+    private enum Cor{
+        BRANCO,
+        CINZA,
+        PRETO
+    }
+    private int[] distanciaDFS;
+    private int tempoAtual;
+    private Cor[] corDFS;
+    private Cor[] corBFS;
+    private Vertice[] paiBFS;
+    private int[] distanciaBFS;
+    private Queue<Vertice> filaBFS;
+    private Collection<Aresta> arestasDeArvore;
+    private Collection<Aresta> arestasDeRetorno;
+    private Collection<Aresta> arestasDeAvanco;
+    private Collection<Aresta> arestasDeCruzamento;
+    private Collection<Aresta> arestasDaBuscaEmLargura;
 
     @Override
     public Grafo carregarGrafo(String path, TipoDeRepresentacao t) throws Exception {
-        Grafo grafo = null;
         FileManager fileManager = new FileManager();
 
         ArrayList<String> conteudo = fileManager.stringReader(path);
@@ -75,55 +97,137 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         return grafo;
     }
 
-    private enum Cor{
-        BRANCO,
-        CINZA,
-        PRETO
-    }
-    private int[] distancia;
-    private int[] tempo;
-    private int tempoAtual;
-    private int[] pai;
-    private Cor[] cor;
-
-    private Collection<Aresta> arestasDeArvore;
-    private Collection<Aresta> arestasDeRetorno;
-    private Collection<Aresta> arestasDeAvanco;
-    private Collection<Aresta> arestasDeCruzamento;
-
     @Override
     public Collection<Aresta> buscaEmProfundidade(Grafo g) {
-        return null;
+        for (Vertice u : grafo.vertices()) {
+            corDFS[u.id()] = Cor.BRANCO;
+        }
+        tempoAtual = 0;
+
+        arestasDeArvore = new ArrayList<>();
+        arestasDeRetorno = new ArrayList<>();
+        arestasDeAvanco = new ArrayList<>();
+        arestasDeCruzamento = new ArrayList<>();
+
+        for (Vertice u : grafo.vertices()) {
+            if (corDFS[u.id()] == Cor.BRANCO) {
+                buscaEmProfundidadeVisitar(u, grafo);
+            }
+        }
+        
+        return arestasDeArvore;
+    }
+
+    private void buscaEmProfundidadeVisitar(Vertice u, Grafo grafo) {
+        corDFS[u.id()] = Cor.CINZA;
+        tempoAtual++;
+        distanciaDFS[u.id()] = tempoAtual;
+
+        try {
+            for (Vertice v : grafo.adjacentesDe(u)){
+                switch (corDFS[v.id()]) {
+                    case BRANCO -> {
+                        buscaEmProfundidadeVisitar(v, grafo);
+                        Aresta arestaDeArvore = new Aresta(u, v);
+                        arestasDeArvore.add(arestaDeArvore);
+                    }
+                    case CINZA -> {
+                        Aresta arestaDeRetorno = new Aresta(u, v);
+                        arestasDeRetorno.add(arestaDeRetorno);
+                    }
+                    case PRETO -> {
+                        if ((distanciaDFS[u.id()] < distanciaDFS[v.id()])) {
+                            Aresta arestaDeAvanco = new Aresta(u, v);
+                            arestasDeAvanco.add(arestaDeAvanco);
+                        } else {
+                            Aresta arestaDeCruzamento = new Aresta(u, v);
+                            arestasDeCruzamento.add(arestaDeCruzamento);
+                        }
+                    }
+                    default -> throw new AssertionError();
+                }
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
+
+        corDFS[u.id()] = Cor.PRETO;
     }
 
     @Override
     public Collection<Aresta> arestasDeArvore(Grafo g) {
-        return null;
+        if (arestasDeArvore == null) {
+            buscaEmProfundidade(g);
+        }
+        return arestasDeArvore;
     }
 
     @Override
     public Collection<Aresta> arestasDeRetorno(Grafo g) {
-        return null;
+        if (arestasDeRetorno == null) {
+            buscaEmProfundidade(g);
+        }
+        return arestasDeRetorno;
     }
 
     @Override
     public Collection<Aresta> arestasDeAvanco(Grafo g) {
-        return null;
+        if (arestasDeAvanco == null) {
+            buscaEmProfundidade(g);
+        }
+        return arestasDeAvanco;
     }
 
     @Override
     public Collection<Aresta> arestasDeCruzamento(Grafo g) {
-        return null;
+        if (arestasDeCruzamento == null) {
+            buscaEmProfundidade(g);
+        }
+        return arestasDeCruzamento;
     }
 
     @Override
-    public Collection<Aresta> buscaEmLargura(Grafo g) {
-        return null;
+    public Collection<Aresta> buscaEmLargura(Grafo g, Vertice origem) {
+        for (Vertice u : grafo.vertices()) {
+            corBFS[u.id()] = Cor.BRANCO;
+            distanciaBFS[u.id()] = Integer.MAX_VALUE;
+            paiBFS[u.id()] = null;
+        }
+
+        corBFS[origem.id()] = Cor.CINZA;
+        distanciaBFS[origem.id()] = 0;
+        paiBFS[origem.id()] = null;
+
+        filaBFS = new LinkedList<>();
+        filaBFS.add(origem);
+
+        while(!filaBFS.isEmpty()){
+            Vertice u = filaBFS.poll();
+            try {
+                for (Vertice v : grafo.adjacentesDe(u)){
+                    if(corBFS[v.id()] == Cor.BRANCO) {
+                        corBFS[v.id()] = Cor.CINZA;
+                        distanciaBFS[v.id()] = distanciaBFS[u.id()] + 1;
+                        paiBFS[v.id()] = u;
+                        filaBFS.add(v);
+                        arestasDaBuscaEmLargura.add(new Aresta(u, v));
+                    }
+                }
+            } catch (Exception e) {
+                e.getMessage();
+            }
+            corBFS[u.id()] = Cor.PRETO;
+        }
+
+        return arestasDaBuscaEmLargura;
     }
 
     @Override 
     public boolean existeCiclo(Grafo g) {
-        return false;
+        if (arestasDeRetorno == null) {
+            buscaEmProfundidade(g);
+        }
+        return !arestasDeRetorno.isEmpty();
     }
 
     @Override

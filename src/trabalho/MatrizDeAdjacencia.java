@@ -7,17 +7,17 @@ import grafos.Vertice;
 
 public class MatrizDeAdjacencia implements Grafo {
 
-    private final double[][] matriz;
-    private final int numVertices;
+    private final double[][] matriz; // define a matriz de adjacência do grafo como final e privada
+    private final int numVertices; // define o número de vértices do grafo como final e privado
 
-    public MatrizDeAdjacencia(int numVertices) {
-        this.numVertices = numVertices;
-        matriz = new double[numVertices][numVertices];
+    public MatrizDeAdjacencia(int numVertices) { // construtor que inicializa a matriz de adjacência
+        this.numVertices = numVertices; // armazena o número de vértices
+        matriz = new double[numVertices][numVertices]; // cria a matriz de adjacência com o tamanho V x V
 
         // Inicializa a matriz com infinito
         for (int i = 0; i < numVertices; i++) {
             for (int j = 0; j < numVertices; j++) {
-                matriz[i][j] = Double.MAX_VALUE;
+                matriz[i][j] = Double.MAX_VALUE; // representa ausência de aresta para não interferir nos pesos
             }
         }
     }
