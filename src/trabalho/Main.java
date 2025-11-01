@@ -1,49 +1,92 @@
 package trabalho;
 
-// import grafos.Aresta;
-// import grafos.Grafo;
-// import grafos.TipoDeRepresentacao;
-// import grafos.Vertice;
-// import grafos.AlgoritmosEmGrafos;
-import grafos.FileManager;
+import grafos.TipoDeRepresentacao;
+import grafos.Aresta;
+import grafos.Grafo;
+import grafos.Vertice;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-// import java.io.File;
-// import java.util.Collection;
+
 
 public class Main {
     public static void main(String[] args) {
-        FileManager fileManager = new FileManager();
+        Algoritmos algoritmos = new Algoritmos();
+        TipoDeRepresentacao tipo = TipoDeRepresentacao.MATRIZ_DE_ADJACENCIA;
+        Grafo grafo = null;
+        ArrayList<Vertice> vertices = new ArrayList<>();
 
-        ArrayList<String> conteudo = fileManager.stringReader("test/teste.txt");
-
-        int numeroDeVertices = Integer.parseInt(conteudo.get(0));
-        int numeroDeArestas = 0;
-        for (int i = 1; i < conteudo.size(); i++) {
-            String[] partes = conteudo.get(i).split(" ");
-            numeroDeArestas += partes.length - 1;
+        try {
+            grafo = algoritmos.carregarGrafo("test/teste.txt", tipo);
+            System.out.println("Grafo carregado com sucesso!");
+        } catch (Exception e) {
+            System.out.println("Erro ao carregar o grafo: " + e.getMessage());
         }
 
-        ArrayList<Integer> destinosList = new ArrayList<>(numeroDeArestas);
-        ArrayList<Integer> origensList = new ArrayList<>(numeroDeArestas);
-        ArrayList<Double> pesosList = new ArrayList<>(numeroDeArestas);
-
-        for (int j = 1; j < conteudo.size(); j++) {
-            String[] partes = conteudo.get(j).split(" ");
-            for (int k = 1; k < partes.length; k++) {
-                String[] subpartes = partes[k].split("-");
-                String[] pesos = subpartes[1].split(";");
-                destinosList.add(Integer.valueOf(subpartes[0]));
-                origensList.add(Integer.valueOf(partes[0]));
-                pesosList.add(Double.valueOf(pesos[0]));
+        if(grafo != null) {
+            vertices.addAll(grafo.vertices());
+        }
+        try {
+            for (Vertice v : vertices) {
+                if(grafo != null) {
+                    System.out.println("Vértice ID: " + v.id() + ", Grau: " + grafo.grauDoVertice(v));
+                    System.out.println("Vértices adjacentes: ");
+                    for (Vertice adj : grafo.adjacentesDe(v)) {
+                        System.out.println(adj.id() + " ");
+                    }
+                }
             }
+        } catch (Exception e) {
+            System.out.println("Erro ao buscar arestas entre 0 e 1: " + e.getMessage());
         }
 
-        System.out.println("Vertices: " + numeroDeVertices);
-        System.out.println("Arestas: " + numeroDeArestas);
-        System.out.println("Destinos: " + destinosList);
-        System.out.println("Origens: " + origensList);
-        System.out.println("Pesos: " + pesosList);
+        for (Aresta aresta : algoritmos.buscaEmProfundidade(grafo)) {
+            System.out.println("Aresta: " + aresta.origem().id() + " -> " + aresta.destino().id());
+            
+        }
+        System.out.println("Arestas da árvore: ");
+        for (Aresta a : algoritmos.arestasDeArvore(grafo)) {
+            System.out.println(a.origem().id() + " -> " + a.destino().id());
+        }
+        System.out.println("Arestas da retorno: ");
+        for (Aresta a : algoritmos.arestasDeRetorno(grafo)) {
+            System.out.println(a.origem().id() + " -> " + a.destino().id());
+        }
+        System.out.println("Arestas da avanco: ");
+        for (Aresta a : algoritmos.arestasDeAvanco(grafo)) {
+            System.out.println(a.origem().id() + " -> " + a.destino().id());
+        }
+        System.out.println("Arestas da cruzamento: ");
+        for (Aresta a : algoritmos.arestasDeCruzamento(grafo)) {
+            System.out.println(a.origem().id() + " -> " + a.destino().id());
+        }
+        System.out.println("Ciclo: " + algoritmos.existeCiclo(grafo));
 
+        System.out.println("Busca em largura a partir do vértice 0:");
+        for (Aresta aresta : algoritmos.buscaEmLargura(grafo, new Vertice(0))) {
+            System.out.println("Aresta: " + aresta.origem().id() + " -> " + aresta.destino().id());
+        }
+
+        System.out.println("Árvore geradora mínima:");
+        for (Aresta aresta : algoritmos.arvoreGeradoraMinima(grafo)){
+            System.out.println("Aresta: " + aresta.origem().id() + " -> " + aresta.destino().id());
+        }
+
+        try {
+            System.out.println("Custo da árvore geradora mínima: " + algoritmos.custoDaArvoreGeradora(grafo, algoritmos.arvoreGeradoraMinima(grafo)));
+        } catch (Exception e) {
+            System.out.println("Erro ao calcular o custo da árvore geradora mínima: " + e.getMessage());    
+        }
+
+        System.out.println("Caminho minimo:");
+        for (Aresta aresta : algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(2))) {
+            System.out.println("Aresta: " + aresta.origem().id() + " -> " + aresta.destino().id());
+        }
+
+        System.out.println("Custo do caminho mínimo:");
+        try {
+            System.out.println(algoritmos.custoDoCaminhoMinimo(grafo, algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(4)), new Vertice(0), new Vertice(4)));
+        } catch (Exception e) {
+            System.out.println("Erro ao calcular o custo do caminho mínimo: " + e.getMessage());
+        }
     }
 }

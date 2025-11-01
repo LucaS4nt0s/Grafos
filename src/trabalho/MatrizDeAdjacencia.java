@@ -64,7 +64,7 @@ public class MatrizDeAdjacencia implements Grafo {
 
         int grau = 0; // inicializa o grau do vértice
         for (int j = 0; j < numVertices; j++) { // percorre a linha e coluna correspondente ao vértice
-            if (matriz[vertice.id()][j] != Double.MAX_VALUE) { // se existir aresta na linha incrementa o grau
+            if (matriz[vertice.id()][j] != Double.MAX_VALUE && vertice.id() != j) { // se existir aresta na linha incrementa o grau
                 grau++;
             }
             if (matriz[j][vertice.id()] != Double.MAX_VALUE) { // se existir aresta na coluna incrementa o grau
