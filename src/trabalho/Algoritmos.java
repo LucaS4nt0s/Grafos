@@ -24,17 +24,20 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     private int[] distanciaDFS; // armazena os tempos de descoberta dos vértices na busca em profundidade
     private int tempoAtual; // armazena o tempo atual durante a busca em profundidade
     private Cor[] corDFS; // armazena as cores dos vértices na busca em profundidade
+
     private Cor[] corBFS; // armazena as cores dos vértices na busca em largura
     private Vertice[] paiBFS; // armazena os pais dos vértices na busca em largura
     private int[] distanciaBFS; // armazena os tempos de descoberta dos vértices na busca em largura
     private Queue<Vertice> filaBFS; // fila para a busca em largura
+
     private Collection<Aresta> arestasDeArvore; // arestas que pertencem à árvore geradora
     private Collection<Aresta> arestasDeRetorno; // arestas que retornam a um vértice ancestral
     private Collection<Aresta> arestasDeAvanco; // arestas que avançam para um vértice descendente
     private Collection<Aresta> arestasDeCruzamento; // arestas que cruzam entre diferentes subárvores
     private Collection<Aresta> arestasDaBuscaEmLargura; // arestas que pertencem à busca em largura
-    private Collection<ArrayList<Vertice>> conjuntoVerticesAGM; // conjunto de vértices da árvore geradora mínima
-    private Collection<Aresta> arestasOrdenadasAGM; // conjunto ordenado de arestas da árvore geradora mínima
+
+    private int[] distanciaDijkstra; // armazena as distâncias mínimas dos vértices na busca de Dijkstra
+    private Vertice[] paiDijkstra; // armazena os pais dos vértices na busca de Dijkstra
 
     @Override 
     public Grafo carregarGrafo(String path, TipoDeRepresentacao t) throws Exception {
@@ -256,8 +259,9 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
     @Override
     public Collection<Aresta> arvoreGeradoraMinima(Grafo g) {
-        arestasOrdenadasAGM = new ArrayList<>(); // lista para armazenar as arestas da árvore geradora mínima
-        conjuntoVerticesAGM = new ArrayList<>(); // lista para armazenar lista dos vértices da árvore geradora mínima
+        Collection<ArrayList<Vertice>> conjuntoVerticesAGM = new ArrayList<>(); // conjunto de vértices da árvore geradora mínima
+        Collection<Aresta> arestasOrdenadasAGM; // conjunto ordenado de arestas da árvore geradora mínima
+        Collection<Aresta> arestasX = new ArrayList<>(); // conjunto de arestas finais da árvore geradora mínima
 
         for (Vertice v : g.vertices()) { // para cada vértice do grafo
             ArrayList<Vertice> novoConjunto = new ArrayList<>(); // cria um novo conjunto de vértices
@@ -268,22 +272,138 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         arestasOrdenadasAGM = todasAsArestas(g); // armazena todas as arestas do grafo na lista
         arestasOrdenadasAGM.stream().sorted((a1, a2) -> Double.compare(a1.peso(), a2.peso())); // ordena as arestas pelo peso
 
-        return arestasOrdenadasAGM;
+        for (Aresta a : arestasOrdenadasAGM) { // para cada aresta na lista ordenada
+            ArrayList<Vertice> conjuntoU = null; // conjunto do vértice origem
+            ArrayList<Vertice> conjuntoV = null; // conjunto do vértice destino
+
+            for (ArrayList<Vertice> conjunto : conjuntoVerticesAGM) { // para cada conjunto de vértices
+                if (conjunto.contains(a.origem())) { // se o conjunto contém o vértice origem
+                    conjuntoU = conjunto; // atribui o conjunto ao conjuntoU
+                }
+                if (conjunto.contains(a.destino())) { // se o conjunto contém o vértice destino
+                    conjuntoV = conjunto; // atribui o conjunto ao conjuntoV
+                }
+            }
+
+            if (conjuntoU != conjuntoV) { // se os conjuntos são diferentes, a aresta pode ser adicionada à árvore geradora mínima
+                arestasX.add(a); // adiciona a aresta à lista final de arestas da árvore geradora mínima
+                if(conjuntoU != null && conjuntoV != null) {
+                    conjuntoU.addAll(conjuntoV); // une os dois conjuntos caso não sejam nulos
+                }
+                conjuntoVerticesAGM.remove(conjuntoV); // remove o conjuntoV da coleção de conjuntos
+            }
+        }
+        return arestasX;
     }
 
     @Override
     public double custoDaArvoreGeradora(Grafo g, Collection<Aresta> arestas) throws Exception {
-        return 0;
+
+        if (arestas == null || arestas.isEmpty()) {
+            throw new Exception("A árvore apresentada não é geradora do grafo.");
+        }
+
+        double custoTotal = 0; // inicializa o custo total como 0
+        for (Aresta a : arestas) { // para cada aresta na coleção
+            custoTotal += a.peso(); // soma o peso da aresta ao custo total
+        }
+        return custoTotal; // retorna o custo total da árvore geradora mínima
     }
 
     @Override
     public ArrayList<Aresta> caminhoMinimo(Grafo g, Vertice origem, Vertice destino ) {
-        return null;
+        distanciaDijkstra = new int[g.numeroDeVertices()]; // inicializa o array de distâncias
+        paiDijkstra = new Vertice[g.numeroDeVertices()]; // inicializa o array
+
+        for (Vertice v : g.vertices()){
+            distanciaDijkstra[v.id()] = Integer.MAX_VALUE; // inicializa a distância como infinito
+            paiDijkstra[v.id()] = null; // inicializa o pai como null
+        }
+
+        distanciaDijkstra[origem.id()] = 0; // define a distância do vértice origem como 0
+
+        ArrayList<Vertice> verticesCaminho = new ArrayList<>(); // inicializa a lista do caminho mínimo
+        ArrayList<Vertice> verticesNaoDescobertos = new ArrayList<>(); // inicializa a lista de vértices não visitados
+
+        Vertice minimo;
+
+        for (Vertice v : g.vertices()){
+            verticesNaoDescobertos.add(v); // adiciona todos os vértices à lista de não visitados
+        }
+
+        while (!verticesCaminho.contains(destino)) {
+            minimo = null;
+            for (Vertice v : verticesNaoDescobertos) {
+                if (minimo == null || distanciaDijkstra[v.id()] < distanciaDijkstra[minimo.id()]) {
+                    minimo = v; // encontra o vértice com a menor distância
+                }
+            }
+
+            verticesNaoDescobertos.remove(minimo); // remove o vértice mínimo da lista de não visitados
+            verticesCaminho.add(minimo);
+
+            try {
+                for (Vertice v : g.adjacentesDe(minimo)) { // para cada vértice adjacente ao vértice mínimo
+                    ArrayList<Aresta> arestasEntre = g.arestasEntre(minimo, v); // obtém as arestas entre os dois vértices
+                    paiDijkstra[v.id()] = minimo; // define o pai do vértice adjacente
+                    for (Aresta a : arestasEntre) {
+                        relaxarAresta(minimo, v, a.peso()); // relaxa a aresta
+                    }
+                }
+            } catch (Exception e) {
+                e.getMessage(); // captura a exceção se os vértices adjacentes não puderem ser acessados
+            }
+        }
+
+        ArrayList<Aresta> caminhoMinimo = new ArrayList<>(); // inicializa a lista de arestas do caminho mínimo
+        Vertice atual = destino; // começa do vértice destino
+        Double pesoAresta;
+        while (atual != null && paiDijkstra[atual.id()] != null)
+        {
+            try {
+                pesoAresta = g.arestasEntre(paiDijkstra[atual.id()], atual).get(0).peso(); // obtém o peso da aresta entre o pai e o vértice atual
+            } catch (Exception e) {
+                pesoAresta = 1.0; // em caso de exceção, define o peso como 1.0
+            }
+            Aresta aresta = new Aresta(paiDijkstra[atual.id()], atual, pesoAresta); // cria a aresta entre o pai e o vértice atual
+            caminhoMinimo.add(0, aresta); // adiciona a aresta no início da lista do caminho mínimo
+            atual = paiDijkstra[atual.id()]; // move para o pai do vértice atual
+        }
+
+        return caminhoMinimo;
+    }
+
+    private void relaxarAresta(Vertice u, Vertice v, double peso) {
+        if (distanciaDijkstra[v.id()] > distanciaDijkstra[u.id()] + peso) {
+            distanciaDijkstra[v.id()] = (int) (distanciaDijkstra[u.id()] + peso);
+            paiDijkstra[v.id()] = u;
+        }
+        
     }
     
     @Override
     public double custoDoCaminhoMinimo (Grafo g, ArrayList<Aresta> arestas, Vertice origem, Vertice destino ) throws Exception {
-        return 0;
+
+        if (arestas == null || arestas.isEmpty()) {
+            throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+        }
+
+        double custoTotal = 0; // inicializa o custo total como 0
+        Vertice atual = origem; // começa do vértice origem
+
+        for (Aresta a : arestas) { // para cada aresta na coleção
+            if (a.origem().id() != atual.id()) { // verifica se a aresta é válida no caminho
+                throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+            }
+            custoTotal += a.peso(); // soma o peso da aresta ao custo total
+            atual = a.destino(); // move para o vértice destino da aresta
+        }
+
+        if (atual.id() != destino.id()) { // verifica se o último vértice é o destino
+            throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+        }
+
+        return custoTotal; // retorna o custo total do caminho mínimo
     }
 
     @Override
