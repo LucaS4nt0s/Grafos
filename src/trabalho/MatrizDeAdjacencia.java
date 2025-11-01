@@ -146,10 +146,6 @@ public class MatrizDeAdjacencia implements Grafo {
         return vertices; 
     }
 
-    public double[][] getMatriz() {
-        return matriz;
-    }
-
     public double[][] matrizTransposta() {
 
         if (matriz == null) {
