@@ -78,23 +78,49 @@ public class Main {
         }
 
         System.out.println("Caminho minimo:");
-        for (Aresta aresta : algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(2))) {
+        for (Aresta aresta : algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(5))) {
             System.out.println("Aresta: " + aresta.origem().id() + " -> " + aresta.destino().id());
         }
 
         System.out.println("Custo do caminho mínimo:");
         try {
-            System.out.println(algoritmos.custoDoCaminhoMinimo(grafo, algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(4)), new Vertice(0), new Vertice(4)));
+            System.out.println(algoritmos.custoDoCaminhoMinimo(grafo, algoritmos.caminhoMinimo(grafo, new Vertice(0), new Vertice(5)), new Vertice(0), new Vertice(5)));
         } catch (Exception e) {
             System.out.println("Erro ao calcular o custo do caminho mínimo: " + e.getMessage());
         }
 
         System.out.println("Fluxo máximo:");
         try {
-            System.out.println(algoritmos.fluxoMaximo(grafo, new Vertice(0), new Vertice(4)));
+            System.out.println(algoritmos.fluxoMaximo(grafo, new Vertice(0), new Vertice(5)));
         } catch (Exception e) {
             System.out.println("Erro ao calcular o fluxo máximo: " + e.getMessage());
         }
 
+        System.out.println("Componentes fortemente conexos:");
+        Grafo componente = algoritmos.componentesFortementeConexos(grafo);
+        System.out.println("Componentes:");
+        if(componente.numeroDeVertices() == 1) {
+            System.out.println("Grafo fortemente conexo.");
+        }else {
+            System.out.println("Número de componentes: " + componente.numeroDeVertices());
+            for (Vertice v : componente.vertices()) {
+                System.out.println("Vértice ID: " + v.id());
+                try {
+                    for (Vertice u : componente.adjacentesDe(v)) {
+                        try {
+                            ArrayList<Aresta> arestas = componente.arestasEntre(v, u);
+                            for (Aresta a : arestas) {
+                                System.out.println("Aresta: " + a.origem().id() + " -> " + a.destino().id());
+                            }
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+        
     }
 }

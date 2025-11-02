@@ -8,7 +8,6 @@ import grafos.Grafo;
 import grafos.Vertice;
 import grafos.TipoDeRepresentacao;
 import grafos.FileManager;
-import java.lang.reflect.Array;
 import java.util.Queue;
 import java.util.LinkedList;
     
@@ -24,6 +23,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     private int[] distanciaDFS; // armazena os tempos de descoberta dos vértices na busca em profundidade
     private int tempoAtual; // armazena o tempo atual durante a busca em profundidade
     private Cor[] corDFS; // armazena as cores dos vértices na busca em profundidade
+    private int[] tempoFinalizacaoDFS; // armazena os tempos de finalização dos vértices na busca em profundidade
 
     private Cor[] corBFS; // armazena as cores dos vértices na busca em largura
     private Vertice[] paiBFS; // armazena os pais dos vértices na busca em largura
@@ -36,7 +36,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     private Collection<Aresta> arestasDeCruzamento; // arestas que cruzam entre diferentes subárvores
     private Collection<Aresta> arestasDaBuscaEmLargura; // arestas que pertencem à busca em largura
 
-    private int[] distanciaDijkstra; // armazena as distâncias mínimas dos vértices na busca de Dijkstra
+    private Double[] distanciaDijkstra; // armazena as distâncias mínimas dos vértices na busca de Dijkstra
     private Vertice[] paiDijkstra; // armazena os pais dos vértices na busca de Dijkstra
 
     @Override 
@@ -110,6 +110,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     public Collection<Aresta> buscaEmProfundidade(Grafo g) {
         this.corDFS = new Cor[g.numeroDeVertices()]; // inicializa o array de cores para os vértices
         this.distanciaDFS = new int[g.numeroDeVertices()]; // inicializa o array de distâncias para os vértices
+        this.tempoFinalizacaoDFS = new int[g.numeroDeVertices()]; // inicializa o array de tempos de finalização
         for (Vertice u : g.vertices()) { // para cada vértice do grafo 
             this.corDFS[u.id()] = Cor.BRANCO; // inicializa a cor como branco
         }
@@ -163,6 +164,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         }
 
         this.corDFS[u.id()] = Cor.PRETO; // marca o vértice como finalizado
+        this.tempoFinalizacaoDFS[u.id()] = ++this.tempoAtual; // armazena o tempo de finalização do vértice
     }
 
     @Override
@@ -249,16 +251,104 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
     @Override
     public Grafo componentesFortementeConexos (Grafo g) {
-        return null;
+        buscaEmProfundidade(g); // realiza a busca em profundidade para calcular os tempos de finalização
+
+        ArrayList<Vertice> verticesOrdenados = new ArrayList<>(g.vertices()); // cria uma lista de vértices para ordenar pelos tempos de finalização
+        verticesOrdenados.sort((v1, v2) -> Integer.compare(this.tempoFinalizacaoDFS[v2.id()], this.tempoFinalizacaoDFS[v1.id()]));  // ordena os vértices pelos tempos de finalização em ordem decrescente
+
+        Grafo grafoTransposto = grafoTransposto(g); // cria o grafo transposto
+
+        int[] cfcID = new int[g.numeroDeVertices()]; // array para armazenar o ID do componente fortemente conexo de cada vértice
+        for (int i = 0; i < cfcID.length; i++) { // percorre o array de IDs
+            cfcID[i] = -1; // -1 significa "não visitado"
+        }
+
+        int componenteAtualID = 0; // O ID do componente 
+
+       for (Vertice v : verticesOrdenados) { // para cada vértice na ordem dos tempos de finalização
+            if (cfcID[v.id()] == -1) { // se o vértice não foi visitado
+                visitarDFS_CFC(grafoTransposto, v, cfcID, componenteAtualID); // visita o vértice no grafo transposto e marca todos os vértices alcançáveis com o mesmo ID de componente
+                componenteAtualID++; // Incrementa o ID para o próximo componente
+            }
+        }
+
+        int numComponentes = componenteAtualID; // o número total de componentes fortemente conexos é igual ao ID atual
+
+        Grafo gCondensado = criarGrafoVazio(g.tipoDeRepresentacao(), numComponentes, g.numeroDeArestas()); // cria o grafo de condensação com o número de componentes como vértices
+
+        try {
+            for (Aresta a : todasAsArestas(g)) { // para cada aresta do grafo original
+                int idOrigem = cfcID[a.origem().id()]; // obtém o ID do componente do vértice de origem
+                int idDestino = cfcID[a.destino().id()]; // obtém o ID do componente do vértice de destino
+
+                if (idOrigem != idDestino) { // se os IDs forem diferentes, adiciona uma aresta entre os componentes no grafo de condensação
+                    gCondensado.setarPeso(new Vertice(idOrigem), new Vertice(idDestino), 1.0);  // adiciona a aresta com peso 1.0
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return gCondensado; 
+    }
+
+    private Grafo grafoTransposto(Grafo g) {
+        Grafo grafoTransposto; // cria uma variável para o grafo transposto
+        
+        switch (g.tipoDeRepresentacao()) { // cria o grafo transposto conforme o tipo de representação do grafo original
+            case MATRIZ_DE_ADJACENCIA -> grafoTransposto = new MatrizDeAdjacencia(g.numeroDeVertices()); 
+            case MATRIZ_DE_INCIDENCIA -> grafoTransposto = new MatrizDeIncidencia(g.numeroDeVertices(), g.numeroDeArestas());
+            case LISTA_DE_ADJACENCIA -> grafoTransposto = new ListaDeAdjacencia(g.numeroDeVertices());
+            default -> throw new AssertionError();
+        }
+
+        try {
+            for (Aresta a : todasAsArestas(g)) { // para cada aresta do grafo original
+                grafoTransposto.adicionarAresta(a.destino(), a.origem(), a.peso()); // adiciona a aresta invertida no grafo transposto
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return grafoTransposto;
+    }
+
+    private Grafo criarGrafoVazio(TipoDeRepresentacao tipo, int numVertices, int numArestas) {
+        switch (tipo) {
+            case MATRIZ_DE_ADJACENCIA -> { // cria um grafo vazio do tipo matriz de adjacência
+                return new MatrizDeAdjacencia(numVertices); 
+            }
+            case MATRIZ_DE_INCIDENCIA -> {
+                return new MatrizDeIncidencia(numVertices, numArestas); // numero de arestas é uma estimativa (pode ser maior que o necessário)
+            }
+            case LISTA_DE_ADJACENCIA -> {
+                return new ListaDeAdjacencia(numVertices); 
+            }
+            default -> throw new IllegalStateException("Tipo de representação inesperado: " + tipo);
+        }
+    }
+
+    private void visitarDFS_CFC(Grafo gTransposto, Vertice u, int[] cfcID, int componenteAtualID) {
+        cfcID[u.id()] = componenteAtualID; // marca o vértice com o ID do componente atual
+
+        try {
+            for (Vertice v : gTransposto.adjacentesDe(u)) { // para cada vértice adjacente no grafo transposto
+                if (cfcID[v.id()] == -1) { // se o vértice não foi visitado
+                    visitarDFS_CFC(gTransposto, v, cfcID, componenteAtualID); // visita o vértice recursivamente
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Erro em visitarDFS_CFC (adjacentesDe): " + e.getMessage());
+        }
     }
 
     private Collection<Aresta> todasAsArestas(Grafo g){
-        Collection<Aresta> arestas = new ArrayList<>();
-        for (Vertice u : g.vertices()) {
+        Collection<Aresta> arestas = new ArrayList<>(); // coleção para armazenar todas as arestas do grafo
+        for (Vertice u : g.vertices()) { // para cada vértice do grafo
             try {
-                for (Vertice v : g.adjacentesDe(u)) {
-                    ArrayList<Aresta> arestasEntre = g.arestasEntre(u, v);
-                    arestas.addAll(arestasEntre);
+                for (Vertice v : g.adjacentesDe(u)) { // para cada vértice adjacente
+                    ArrayList<Aresta> arestasEntre = g.arestasEntre(u, v); // obtém as arestas entre os dois vértices
+                    arestas.addAll(arestasEntre); // adiciona as arestas à coleção
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -310,7 +400,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     public double custoDaArvoreGeradora(Grafo g, Collection<Aresta> arestas) throws Exception {
 
         if (arestas == null || arestas.isEmpty()) {
-            throw new Exception("A árvore apresentada não é geradora do grafo.");
+            throw new Exception("A árvore apresentada não é geradora do grafo."); // lança uma exceção se a coleção de arestas for nula ou vazia
         }
 
         double custoTotal = 0; // inicializa o custo total como 0
@@ -322,15 +412,15 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
     @Override
     public ArrayList<Aresta> caminhoMinimo(Grafo g, Vertice origem, Vertice destino ) {
-        this.distanciaDijkstra = new int[g.numeroDeVertices()]; // inicializa o array de distâncias
+        this.distanciaDijkstra = new Double[g.numeroDeVertices()]; // inicializa o array de distâncias
         this.paiDijkstra = new Vertice[g.numeroDeVertices()]; // inicializa o array
 
         for (Vertice v : g.vertices()){
-            this.distanciaDijkstra[v.id()] = Integer.MAX_VALUE; // inicializa a distância como infinito
+            this.distanciaDijkstra[v.id()] = Double.POSITIVE_INFINITY; // inicializa a distância como infinito
             this.paiDijkstra[v.id()] = null; // inicializa o pai como null
         }
 
-        this.distanciaDijkstra[origem.id()] = 0; // define a distância do vértice origem como 0
+        this.distanciaDijkstra[origem.id()] = 0.0; // define a distância do vértice origem como 0
 
         ArrayList<Vertice> verticesNaoDescobertos = new ArrayList<>(); // inicializa a lista de vértices não visitados
 
@@ -365,13 +455,13 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         ArrayList<Aresta> caminhoMinimo = new ArrayList<>(); // inicializa a lista de arestas do caminho mínimo
         Vertice atual = destino; // começa do vértice destino
         Double pesoAresta;
-        while (atual != null && this.paiDijkstra[atual.id()] != null)
+        while (atual != null && this.paiDijkstra[atual.id()] != null) // enquanto o vértice atual não for nulo e tiver um pai
         {
             try {
                 pesoAresta = g.arestasEntre(this.paiDijkstra[atual.id()], atual).get(0).peso(); // obtém o peso da aresta entre o pai e o vértice atual
             } catch (Exception e) {
-                System.out.println(e.getMessage());
-                pesoAresta = 1.0;
+                System.out.println(e.getMessage()); 
+                pesoAresta = 1.0; // valor padrão caso ocorra um erro
             }
             Aresta aresta = new Aresta(this.paiDijkstra[atual.id()], atual, pesoAresta); // cria a aresta entre o pai e o vértice atual
             caminhoMinimo.add(0, aresta); // adiciona a aresta no início da lista do caminho mínimo
@@ -382,17 +472,17 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     }
 
     private void relaxarAresta(Vertice u, Vertice v, double peso) {
-        if (this.distanciaDijkstra[v.id()] > this.distanciaDijkstra[u.id()] + peso) {
-            this.distanciaDijkstra[v.id()] = (int) (this.distanciaDijkstra[u.id()] + peso);
-            this.paiDijkstra[v.id()] = u;
-        }
+        if (this.distanciaDijkstra[v.id()] > this.distanciaDijkstra[u.id()] + peso) { // se a distância do vértice v for maior que a distância do vértice u mais o peso da aresta
+            this.distanciaDijkstra[v.id()] = (Double) (this.distanciaDijkstra[u.id()] + peso); // atualiza a distância do vértice v
+            this.paiDijkstra[v.id()] = u; // atualiza o pai do vértice v
+        } 
     }
     
     @Override
     public double custoDoCaminhoMinimo (Grafo g, ArrayList<Aresta> arestas, Vertice origem, Vertice destino ) throws Exception {
 
         if (arestas == null || arestas.isEmpty()) {
-            throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+            throw new Exception("A sequência apresentada não é um caminho entre origem e destino."); // lança uma exceção se a coleção de arestas for nula ou vazia
         }
 
         double custoTotal = 0; // inicializa o custo total como 0
@@ -400,14 +490,14 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
         for (Aresta a : arestas) { // para cada aresta na coleção
             if (a.origem().id() != atual.id()) { // verifica se a aresta é válida no caminho
-                throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+                throw new Exception("A sequência apresentada não é um caminho entre origem e destino."); // lança uma exceção se a aresta não for válida
             }
             custoTotal += a.peso(); // soma o peso da aresta ao custo total
             atual = a.destino(); // move para o vértice destino da aresta
         }
 
         if (atual.id() != destino.id()) { // verifica se o último vértice é o destino
-            throw new Exception("A sequência apresentada não é um caminho entre origem e destino.");
+            throw new Exception("A sequência apresentada não é um caminho entre origem e destino."); // lança uma exceção se o último vértice não for o destino
         }
 
         return custoTotal; // retorna o custo total do caminho mínimo
@@ -417,47 +507,47 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     public double fluxoMaximo (Grafo g, Vertice origem, Vertice destino) {
         Grafo grafoResidual; // cria o grafo residual como uma cópia do grafo original
 
-        switch (g.tipoDeRepresentacao()) {
-            case MATRIZ_DE_ADJACENCIA -> grafoResidual = new MatrizDeAdjacencia(g.numeroDeVertices());
+        switch (g.tipoDeRepresentacao()) { // cria o grafo residual conforme o tipo de representação do grafo original
+            case MATRIZ_DE_ADJACENCIA -> grafoResidual = new MatrizDeAdjacencia(g.numeroDeVertices()); 
             case MATRIZ_DE_INCIDENCIA -> grafoResidual = new MatrizDeIncidencia(g.numeroDeVertices(), g.numeroDeArestas() * 2);
             case LISTA_DE_ADJACENCIA -> grafoResidual = new ListaDeAdjacencia(g.numeroDeVertices());
             default -> throw new IllegalStateException("Unexpected value: " + g.tipoDeRepresentacao());
         }
 
-        grafoResidual = copiarGrafo(g, grafoResidual);
+        grafoResidual = copiarGrafo(g, grafoResidual); // copia o grafo original para o grafo residual
 
         try {
-            Collection<Aresta> todasArestas = todasAsArestas(g);
-            for (Aresta a : todasArestas) {
-                boolean reversaExiste = false;
+            Collection<Aresta> todasArestas = todasAsArestas(g); // obtém todas as arestas do grafo original
+            for (Aresta a : todasArestas) { // para cada aresta no grafo original
+                boolean reversaExiste = false; // verifica se a aresta reversa já existe no grafo residual
                 try {
-                    if (!grafoResidual.arestasEntre(a.destino(), a.origem()).isEmpty()) {
-                        reversaExiste = true;
+                    if (!grafoResidual.arestasEntre(a.destino(), a.origem()).isEmpty()) { // verifica se a aresta reversa já existe
+                        reversaExiste = true; // marca que a aresta reversa existe
                     }
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
-                if (!reversaExiste) {
-                    grafoResidual.adicionarAresta(a.destino(), a.origem(), 0.0);
+                if (!reversaExiste) { // se a aresta reversa não existe, adiciona-a ao grafo residual
+                    grafoResidual.adicionarAresta(a.destino(), a.origem(), 0.0); // adiciona a aresta reversa com capacidade 0 ao grafo residual
                 }
             }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         
-        double fluxoTotal = 0;
-        while (true){
-            ArrayList<Aresta> caminhoAumentante = new ArrayList<>();
-            Vertice[] pais = buscaEmLarguraComDestino(grafoResidual, origem, destino);
-            Vertice atual = destino;
+        double fluxoTotal = 0; // inicializa o fluxo total como 0
+        while (true){ // enquanto houver caminho aumentante
+            ArrayList<Aresta> caminhoAumentante = new ArrayList<>(); // inicializa a lista de arestas do caminho aumentante
+            Vertice[] pais = buscaEmLarguraComDestino(grafoResidual, origem, destino); // realiza a busca em largura para encontrar um caminho do origem ao destino no grafo residual
+            Vertice atual = destino; // começa do vértice destino
 
-            while (pais[atual.id()] != null) {
-                Vertice uPai = pais[atual.id()];
-                Aresta arestaCorreta = null; 
+            while (pais[atual.id()] != null) { // enquanto houver um pai para o vértice atual
+                Vertice uPai = pais[atual.id()]; // obtém o pai do vértice atual
+                Aresta arestaCorreta = null;  // variável para armazenar a aresta correta entre o pai e o vértice atual
                 try {
-                    for (Aresta a : grafoResidual.arestasEntre(uPai, atual)) {
-                        if (a.peso() > 0) {
-                            arestaCorreta = a;
+                    for (Aresta a : grafoResidual.arestasEntre(uPai, atual)) { // para cada aresta entre o pai e o vértice atual
+                        if (a.peso() > 0) { // verifica se a aresta tem capacidade positiva
+                            arestaCorreta = a; // armazena a aresta correta
                             break; 
                         }
                     }
@@ -466,13 +556,13 @@ public class Algoritmos implements AlgoritmosEmGrafos {
                     System.out.println("Erro crítico ao buscar arestas entre " + uPai.id() + " e " + atual.id() + ": " + e.getMessage());
                 }
 
-                if (arestaCorreta == null) {
-                    System.out.println("Erro de lógica: Reconstrução de caminho falhou. BFS encontrou um caminho fantasma.");
+                if (arestaCorreta == null) { // se não encontrou uma aresta correta, há um erro de lógica
+                    System.out.println("Erro de lógica: Reconstrução de caminho falhou. BFS encontrou um caminho fantasma."); 
                     caminhoAumentante.clear(); // Invalida o caminho
                     break; // Sai do 'while' de reconstrução
                 }
 
-                caminhoAumentante.add(0, arestaCorreta);
+                caminhoAumentante.add(0, arestaCorreta); // adiciona a aresta correta ao início da lista do caminho aumentante
                 atual = uPai; // (uPai é o pais[atual.id()])
             }
 
@@ -480,20 +570,20 @@ public class Algoritmos implements AlgoritmosEmGrafos {
                 break; // não há mais caminho aumentante
             }
             
-            double capacidadeMinima = Double.MAX_VALUE;
-            for (Aresta a : caminhoAumentante) {
-                if (a.peso() < capacidadeMinima) {
-                    capacidadeMinima = a.peso();
+            double capacidadeMinima = Double.MAX_VALUE; // inicializa a capacidade mínima como infinito
+            for (Aresta a : caminhoAumentante) { // para cada aresta no caminho aumentante
+                if (a.peso() < capacidadeMinima) { // encontra a capacidade mínima no caminho aumentante
+                    capacidadeMinima = a.peso(); // atualiza a capacidade mínima
                 }
             }
 
-            fluxoTotal += capacidadeMinima;
+            fluxoTotal += capacidadeMinima; // adiciona a capacidade mínima ao fluxo total
 
-            for (Aresta a : caminhoAumentante){
+            for (Aresta a : caminhoAumentante){ // para cada aresta no caminho aumentante
                 try {
-                    Aresta arestaResidualVolta = grafoResidual.arestasEntre(a.destino(), a.origem()).get(0);
-                    grafoResidual.setarPeso(a.origem(), a.destino(), a.peso() - capacidadeMinima);
-                    grafoResidual.setarPeso(arestaResidualVolta.origem(), arestaResidualVolta.destino(), arestaResidualVolta.peso() + capacidadeMinima);
+                    Aresta arestaResidualVolta = grafoResidual.arestasEntre(a.destino(), a.origem()).get(0); // obtém a aresta reversa no grafo residual
+                    grafoResidual.setarPeso(a.origem(), a.destino(), a.peso() - capacidadeMinima); // reduz a capacidade da aresta no grafo residual
+                    grafoResidual.setarPeso(arestaResidualVolta.origem(), arestaResidualVolta.destino(), arestaResidualVolta.peso() + capacidadeMinima); // aumenta a capacidade da aresta reversa no grafo residual
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
@@ -526,12 +616,12 @@ public class Algoritmos implements AlgoritmosEmGrafos {
             Vertice u = this.filaBFS.poll(); // remove o vértice da frente da fila
             try { // tenta percorrer os vértices adjacentes (tratamento de exceção necessário para a função adjacentesDe)
                 for (Vertice v : g.adjacentesDe(u)){ // para cada vértice adjacente
-                    double capacidade = 0.0;
+                    double capacidade = 0.0; // variável para armazenar a capacidade total entre os dois vértices
                     try {
-                        ArrayList<Aresta> arestas = g.arestasEntre(u, v);
-                        for (Aresta aresta : arestas){
-                            if (aresta.peso() > 0) {
-                                capacidade += aresta.peso();
+                        ArrayList<Aresta> arestas = g.arestasEntre(u, v); // obtém as arestas entre os dois vértices
+                        for (Aresta aresta : arestas){ // para cada aresta entre os dois vértices
+                            if (aresta.peso() > 0) { // considera apenas arestas com capacidade positiva
+                                capacidade += aresta.peso(); // soma a capacidade das arestas
                             }
                         }
                     } catch (Exception e) {
@@ -557,10 +647,10 @@ public class Algoritmos implements AlgoritmosEmGrafos {
         return this.paiBFS;
     }
 
-    private Grafo copiarGrafo(Grafo g, Grafo grafoCopia) {
-        for (Aresta a : todasAsArestas(g)) {
+    private Grafo copiarGrafo(Grafo g, Grafo grafoCopia) { 
+        for (Aresta a : todasAsArestas(g)) { // para cada aresta no grafo original
             try {
-                grafoCopia.adicionarAresta(a.origem(), a.destino(), a.peso());
+                grafoCopia.adicionarAresta(a.origem(), a.destino(), a.peso()); // adiciona a aresta ao grafo cópia
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
