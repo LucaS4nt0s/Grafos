@@ -415,19 +415,67 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
     @Override
     public double fluxoMaximo (Grafo g, Vertice origem, Vertice destino) {
-        Grafo grafoResidual = g;
+        Grafo grafoResidual; // cria o grafo residual como uma cópia do grafo original
+
+        switch (g.tipoDeRepresentacao()) {
+            case MATRIZ_DE_ADJACENCIA -> grafoResidual = new MatrizDeAdjacencia(g.numeroDeVertices());
+            case MATRIZ_DE_INCIDENCIA -> grafoResidual = new MatrizDeIncidencia(g.numeroDeVertices(), g.numeroDeArestas() * 2);
+            case LISTA_DE_ADJACENCIA -> grafoResidual = new ListaDeAdjacencia(g.numeroDeVertices());
+            default -> throw new IllegalStateException("Unexpected value: " + g.tipoDeRepresentacao());
+        }
+
+        grafoResidual = copiarGrafo(g, grafoResidual);
 
         try {
             Collection<Aresta> todasArestas = todasAsArestas(g);
             for (Aresta a : todasArestas) {
-                grafoResidual.adicionarAresta(a.destino(), a.origem(), 0.0);
+                boolean reversaExiste = false;
+                try {
+                    if (!grafoResidual.arestasEntre(a.destino(), a.origem()).isEmpty()) {
+                        reversaExiste = true;
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+                if (!reversaExiste) {
+                    grafoResidual.adicionarAresta(a.destino(), a.origem(), 0.0);
+                }
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        
+        double fluxoTotal = 0;
         while (true){
-            ArrayList<Aresta> caminhoAumentante = new ArrayList<>(buscaEmLarguraComDestino(grafoResidual, origem, destino));
+            ArrayList<Aresta> caminhoAumentante = new ArrayList<>();
+            Vertice[] pais = buscaEmLarguraComDestino(grafoResidual, origem, destino);
+            Vertice atual = destino;
+
+            while (pais[atual.id()] != null) {
+                Vertice uPai = pais[atual.id()];
+                Aresta arestaCorreta = null; 
+                try {
+                    for (Aresta a : grafoResidual.arestasEntre(uPai, atual)) {
+                        if (a.peso() > 0) {
+                            arestaCorreta = a;
+                            break; 
+                        }
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("Erro crítico ao buscar arestas entre " + uPai.id() + " e " + atual.id() + ": " + e.getMessage());
+                }
+
+                if (arestaCorreta == null) {
+                    System.out.println("Erro de lógica: Reconstrução de caminho falhou. BFS encontrou um caminho fantasma.");
+                    caminhoAumentante.clear(); // Invalida o caminho
+                    break; // Sai do 'while' de reconstrução
+                }
+
+                caminhoAumentante.add(0, arestaCorreta);
+                atual = uPai; // (uPai é o pais[atual.id()])
+            }
+
             if (caminhoAumentante.isEmpty()) {
                 break; // não há mais caminho aumentante
             }
@@ -439,25 +487,22 @@ public class Algoritmos implements AlgoritmosEmGrafos {
                 }
             }
 
+            fluxoTotal += capacidadeMinima;
+
             for (Aresta a : caminhoAumentante){
                 try {
+                    Aresta arestaResidualVolta = grafoResidual.arestasEntre(a.destino(), a.origem()).get(0);
                     grafoResidual.setarPeso(a.origem(), a.destino(), a.peso() - capacidadeMinima);
-                    grafoResidual.setarPeso(a.destino(), a.origem(), a.peso() + capacidadeMinima);
+                    grafoResidual.setarPeso(arestaResidualVolta.origem(), arestaResidualVolta.destino(), arestaResidualVolta.peso() + capacidadeMinima);
                 } catch (Exception e) {
+                    System.out.println(e.getMessage());
                 }
-            }
-        }
-        double fluxoTotal = 0;
-        Collection<Aresta> arestasResidual = todasAsArestas(grafoResidual);
-        for (Aresta a : arestasResidual) {
-            if (a.origem().id() == origem.id()) {
-                fluxoTotal += a.peso();
             }
         }
         return fluxoTotal;
     }
 
-    private Collection<Aresta> buscaEmLarguraComDestino(Grafo g, Vertice origem, Vertice destino) {
+    private Vertice[] buscaEmLarguraComDestino(Grafo g, Vertice origem, Vertice destino) {
         this.corBFS = new Cor[g.numeroDeVertices()]; // inicializa o array de cores para os vértices
         this.paiBFS = new Vertice[g.numeroDeVertices()]; // inicializa o array de pais para os vértices
         this.distanciaBFS = new int[g.numeroDeVertices()]; // inicializa o array de distâncias para os vértices
@@ -481,14 +526,25 @@ public class Algoritmos implements AlgoritmosEmGrafos {
             Vertice u = this.filaBFS.poll(); // remove o vértice da frente da fila
             try { // tenta percorrer os vértices adjacentes (tratamento de exceção necessário para a função adjacentesDe)
                 for (Vertice v : g.adjacentesDe(u)){ // para cada vértice adjacente
-                    if(this.corBFS[v.id()] == Cor.BRANCO) { // se a cor for branco
+                    double capacidade = 0.0;
+                    try {
+                        ArrayList<Aresta> arestas = g.arestasEntre(u, v);
+                        for (Aresta aresta : arestas){
+                            if (aresta.peso() > 0) {
+                                capacidade += aresta.peso();
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                    if(this.corBFS[v.id()] == Cor.BRANCO && capacidade > 0) { // se a cor for branco e o peso for maior que 0
                         this.corBFS[v.id()] = Cor.CINZA; // marca o vértice como em exploração
                         this.distanciaBFS[v.id()] = this.distanciaBFS[u.id()] + 1; // define a distância do vértice adjacente
                         this.paiBFS[v.id()] = u; // define o pai do vértice adjacente
                         this.filaBFS.add(v); // adiciona o vértice adjacente à fila
                         this.arestasDaBuscaEmLargura.add(new Aresta(u, v)); // adiciona a aresta à coleção de arestas da busca em largura
                         if (v.id() == destino.id()) { // se o vértice destino for alcançado, encerra a busca
-                            return this.arestasDaBuscaEmLargura;
+                            return this.paiBFS;
                         }
                     }
                 }
@@ -498,6 +554,17 @@ public class Algoritmos implements AlgoritmosEmGrafos {
             this.corBFS[u.id()] = Cor.PRETO; // marca o vértice como finalizado
         }
 
-        return this.arestasDaBuscaEmLargura;
+        return this.paiBFS;
+    }
+
+    private Grafo copiarGrafo(Grafo g, Grafo grafoCopia) {
+        for (Aresta a : todasAsArestas(g)) {
+            try {
+                grafoCopia.adicionarAresta(a.origem(), a.destino(), a.peso());
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        return grafoCopia;
     }
 }

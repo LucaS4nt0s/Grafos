@@ -3,6 +3,7 @@ package trabalho;
 import java.util.ArrayList;
 import grafos.Grafo;
 import grafos.Aresta;
+import grafos.TipoDeRepresentacao;
 import grafos.Vertice;
 
 public class MatrizDeIncidencia implements Grafo {
@@ -150,5 +151,10 @@ public class MatrizDeIncidencia implements Grafo {
             vertices.add(new Vertice(i)); // adiciona o vértice à lista
         }
         return vertices;
+    }
+
+    @Override
+     public TipoDeRepresentacao tipoDeRepresentacao() {
+        return TipoDeRepresentacao.MATRIZ_DE_INCIDENCIA; // retorna o tipo de representação do grafo
     }
 }

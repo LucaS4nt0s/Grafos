@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import grafos.Aresta;
 import grafos.Grafo;
+import grafos.TipoDeRepresentacao;
 import grafos.Vertice;
 
 public class ListaDeAdjacencia implements Grafo{
@@ -121,5 +122,10 @@ public class ListaDeAdjacencia implements Grafo{
             vertices.add(new Vertice(i));
         }
         return vertices;
+    }
+
+    @Override
+    public TipoDeRepresentacao tipoDeRepresentacao() {
+        return TipoDeRepresentacao.LISTA_DE_ADJACENCIA; // retorna o tipo de representação do grafo
     }
 }

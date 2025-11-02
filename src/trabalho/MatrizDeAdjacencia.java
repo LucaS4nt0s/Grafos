@@ -3,6 +3,7 @@ package trabalho;
 import java.util.ArrayList;
 import grafos.Grafo;
 import grafos.Aresta;
+import grafos.TipoDeRepresentacao;
 import grafos.Vertice;
 
 public class MatrizDeAdjacencia implements Grafo {
@@ -144,6 +145,11 @@ public class MatrizDeAdjacencia implements Grafo {
             vertices.add(new Vertice(i)); // adiciona o vértice na lista
         }
         return vertices; 
+    }
+
+    @Override
+    public TipoDeRepresentacao tipoDeRepresentacao() {
+        return TipoDeRepresentacao.MATRIZ_DE_ADJACENCIA; // retorna o tipo de representação do grafo
     }
 
 }

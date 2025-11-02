@@ -97,5 +97,10 @@ public interface Grafo {
      * @return vértices do grafo.
      */
     public ArrayList<Vertice> vertices();
-    
+
+    /**
+     * Retorna o tipo de representação do grafo.
+     * @return tipo de representação do grafo.
+     */
+    public TipoDeRepresentacao tipoDeRepresentacao();
 }
