@@ -88,5 +88,13 @@ public class Main {
         } catch (Exception e) {
             System.out.println("Erro ao calcular o custo do caminho mínimo: " + e.getMessage());
         }
+
+        System.out.println("Fluxo máximo:");
+        try {
+            System.out.println(algoritmos.fluxoMaximo(grafo, new Vertice(0), new Vertice(4)));
+        } catch (Exception e) {
+            System.out.println("Erro ao calcular o fluxo máximo: " + e.getMessage());
+        }
+
     }
 }

@@ -414,7 +414,90 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     }
 
     @Override
-    public double fluxoMaximo (Grafo g) {
-        return 0;
+    public double fluxoMaximo (Grafo g, Vertice origem, Vertice destino) {
+        Grafo grafoResidual = g;
+
+        try {
+            Collection<Aresta> todasArestas = todasAsArestas(g);
+            for (Aresta a : todasArestas) {
+                grafoResidual.adicionarAresta(a.destino(), a.origem(), 0.0);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        while (true){
+            ArrayList<Aresta> caminhoAumentante = new ArrayList<>(buscaEmLarguraComDestino(grafoResidual, origem, destino));
+            if (caminhoAumentante.isEmpty()) {
+                break; // não há mais caminho aumentante
+            }
+            
+            double capacidadeMinima = Double.MAX_VALUE;
+            for (Aresta a : caminhoAumentante) {
+                if (a.peso() < capacidadeMinima) {
+                    capacidadeMinima = a.peso();
+                }
+            }
+
+            for (Aresta a : caminhoAumentante){
+                try {
+                    grafoResidual.setarPeso(a.origem(), a.destino(), a.peso() - capacidadeMinima);
+                    grafoResidual.setarPeso(a.destino(), a.origem(), a.peso() + capacidadeMinima);
+                } catch (Exception e) {
+                }
+            }
+        }
+        double fluxoTotal = 0;
+        Collection<Aresta> arestasResidual = todasAsArestas(grafoResidual);
+        for (Aresta a : arestasResidual) {
+            if (a.origem().id() == origem.id()) {
+                fluxoTotal += a.peso();
+            }
+        }
+        return fluxoTotal;
+    }
+
+    private Collection<Aresta> buscaEmLarguraComDestino(Grafo g, Vertice origem, Vertice destino) {
+        this.corBFS = new Cor[g.numeroDeVertices()]; // inicializa o array de cores para os vértices
+        this.paiBFS = new Vertice[g.numeroDeVertices()]; // inicializa o array de pais para os vértices
+        this.distanciaBFS = new int[g.numeroDeVertices()]; // inicializa o array de distâncias para os vértices
+
+        for (Vertice u : g.vertices()) { // para cada vértice do grafo
+            this.corBFS[u.id()] = Cor.BRANCO; // inicializa a cor como branco
+            this.distanciaBFS[u.id()] = Integer.MAX_VALUE; // inicializa a distância como infinito
+            this.paiBFS[u.id()] = null; // inicializa o pai como null
+        }
+
+        this.corBFS[origem.id()] = Cor.CINZA; // marca o vértice origem como em exploração
+        this.distanciaBFS[origem.id()] = 0; // define a distância do vértice origem como 0
+        this.paiBFS[origem.id()] = null; // o pai do vértice origem é null
+
+        this.filaBFS = new LinkedList<>(); // inicializa a fila para a busca em largura
+        this.filaBFS.add(origem); // adiciona o vértice origem à fila
+
+        this.arestasDaBuscaEmLargura = new ArrayList<>(); // inicializa a coleção de arestas da busca em largura
+
+        while(!this.filaBFS.isEmpty()){ // enquanto a fila não estiver vazia
+            Vertice u = this.filaBFS.poll(); // remove o vértice da frente da fila
+            try { // tenta percorrer os vértices adjacentes (tratamento de exceção necessário para a função adjacentesDe)
+                for (Vertice v : g.adjacentesDe(u)){ // para cada vértice adjacente
+                    if(this.corBFS[v.id()] == Cor.BRANCO) { // se a cor for branco
+                        this.corBFS[v.id()] = Cor.CINZA; // marca o vértice como em exploração
+                        this.distanciaBFS[v.id()] = this.distanciaBFS[u.id()] + 1; // define a distância do vértice adjacente
+                        this.paiBFS[v.id()] = u; // define o pai do vértice adjacente
+                        this.filaBFS.add(v); // adiciona o vértice adjacente à fila
+                        this.arestasDaBuscaEmLargura.add(new Aresta(u, v)); // adiciona a aresta à coleção de arestas da busca em largura
+                        if (v.id() == destino.id()) { // se o vértice destino for alcançado, encerra a busca
+                            return this.arestasDaBuscaEmLargura;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage()); // captura a exceção se os vértices adjacentes não puderem ser acessados
+            }
+            this.corBFS[u.id()] = Cor.PRETO; // marca o vértice como finalizado
+        }
+
+        return this.arestasDaBuscaEmLargura;
     }
 }
