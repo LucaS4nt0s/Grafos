@@ -408,10 +408,10 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     @Override
     public double custoDaArvoreGeradora(Grafo g, Collection<Aresta> arestas) throws Exception {
 
-        if (arestas == null || arestas.isEmpty()) {
-            throw new Exception("A árvore apresentada não é geradora do grafo."); // lança uma exceção se a coleção de arestas for nula ou vazia
+        int numVertices = g.numeroDeVertices(); // obtém o número de vértices do grafo
+        if (arestas == null || arestas.size() != numVertices - 1) { // verifica se o número de arestas é igual a V-1
+            throw new Exception("A árvore apresentada não é geradora do grafo."); 
         }
-
         double custoTotal = 0; // inicializa o custo total como 0
         for (Aresta a : arestas) { // para cada aresta na coleção
             custoTotal += a.peso(); // soma o peso da aresta ao custo total

@@ -16,44 +16,41 @@ public class MatrizDeIncidencia implements Grafo {
     public MatrizDeIncidencia(int numVertices, int numArestas) { // construtor que inicializa a matriz de incidência
         this.numVertices = numVertices;  // armazena o número de vértices
         this.numArestas = numArestas; // armazena o número de arestas
-        matriz = new Aresta[numVertices][numArestas]; // cria a matriz de incidência com o tamanho V x A
+        this.matriz = new Aresta[numVertices][numArestas]; // cria a matriz de incidência com o tamanho V x A
 
         // Inicializa a matriz com infinito
         for (int i = 0; i < numVertices; i++) {
             for (int j = 0; j < numArestas; j++) {
-                matriz[i][j] = null;
+                this.matriz[i][j] = null;
             }
         }
     }
 
     @Override
     public void adicionarAresta(Vertice origem, Vertice destino) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
-            throw new Exception("Vértice não existe.");
-        }
-            Aresta aresta = new Aresta(origem, destino, 1); // cria o objeto Aresta
-            matriz[aresta.destino().id()][arestaAtual] = aresta; // adiciona à linha do vertice de destino a aresta como peso padrão 1, na coluna da aresta atual
-            matriz[aresta.origem().id()][arestaAtual] = aresta; // adiciona à linha do vertice de origem a aresta como peso padrão 1, na coluna da aresta atual
-            arestaAtual++; // incrementa o contador de arestas
+        adicionarAresta(origem, destino, 1.0);
     }
 
     @Override
     public void adicionarAresta(Vertice origem, Vertice destino, double peso) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
+        if (origem.id() < 0 || origem.id() >= this.numVertices || destino.id() < 0 || destino.id() >= this.numVertices) { // caso os vértices não existam
             throw new Exception("Vértice não existe.");
+        }
+
+        if (this.arestaAtual >= this.numArestas) {
+            throw new Exception("Erro: Tentando adicionar mais arestas (" + (this.arestaAtual + 1) + ") do que o alocado (" + this.numArestas + ").");
         }
     
         Aresta aresta = new Aresta(origem, destino, peso); // cria o objeto Aresta com o peso definido
-        matriz[aresta.origem().id()][arestaAtual] = aresta; // adiciona à linha do vertice de origem a aresta com peso definido, na coluna da aresta atual
-        matriz[aresta.destino().id()][arestaAtual] = aresta; // adiciona à linha do vertice de destino a aresta com o peso definido, na coluna da aresta atual
-        arestaAtual++; // incrementa o contador de arestas
+        this.matriz[aresta.origem().id()][this.arestaAtual] = aresta; // adiciona à linha do vertice de origem a aresta com peso definido, na coluna da aresta atual
+        this.arestaAtual++; // incrementa o contador de arestas
     }
 
     @Override
     public boolean existeAresta(Vertice origem, Vertice destino){
         boolean existe = false; // inicializa a variável de existência da aresta como false
-        for (int i = 0; i < numArestas; i++) {  // percorre todas as colunas da matriz
-            if (matriz[destino.id()][i] != null && matriz[destino.id()][i].origem().id() == origem.id()) { // verifica se a aresta existe entre origem e destino
+        for (int i = 0; i < this.numArestas; i++) {  // percorre todas as colunas da matriz
+            if (this.matriz[destino.id()][i] != null && this.matriz[destino.id()][i].origem().id() == origem.id()) { // verifica se a aresta existe entre origem e destino
                 existe = true; // se existir, atualiza a variável para true
                 break;
             }
@@ -68,8 +65,8 @@ public class MatrizDeIncidencia implements Grafo {
         }
 
         int grau = 0; // inicializa o grau do vértice
-        for (int i = 0; i < numArestas; i++) {  // percorre todas as colunas da matriz
-            if (matriz[vertice.id()][i] != null) { // se existir aresta na linha incrementa o grau
+        for (int i = 0; i < this.numArestas; i++) {  // percorre todas as colunas da matriz
+            if (this.matriz[vertice.id()][i] != null) { // se existir aresta na linha incrementa o grau
                 grau++;
             }
         }
@@ -78,24 +75,24 @@ public class MatrizDeIncidencia implements Grafo {
 
     @Override
     public int numeroDeVertices(){
-        return numVertices;
+        return this.numVertices;
     }
 
     @Override
     public int numeroDeArestas(){
-        return numArestas;
+        return this.numArestas;
     }
 
     @Override
     public ArrayList<Vertice> adjacentesDe(Vertice vertice) throws Exception{
-        if (vertice.id() < 0 || vertice.id() >= numVertices) {
+        if (vertice.id() < 0 || vertice.id() >= this.numVertices) {
             throw new Exception("Vértice não existe.");
         }
 
         ArrayList<Vertice> adjacentes = new ArrayList<>(); // inicializa a lista de vértices adjacentes
-        for (int i = 0; i < numArestas; i++) { // percorre todas as colunas da matriz
-            if (matriz[vertice.id()][i] != null && matriz[vertice.id()][i].origem().id() == vertice.id()) { // se existir aresta na linha
-                adjacentes.add(matriz[vertice.id()][i].destino()); // adiciona o vértice de destino à lista de adjacentes
+        for (int i = 0; i < this.arestaAtual; i++) { // percorre todas as colunas da matriz
+            if (this.matriz[vertice.id()][i] != null && this.matriz[vertice.id()][i].origem().id() == vertice.id()) {  // se existir aresta na linha do vértice
+                adjacentes.add(this.matriz[vertice.id()][i].destino()); // adiciona o vértice destino na lista de adjacentes
             }
         }
         return adjacentes;
@@ -103,33 +100,34 @@ public class MatrizDeIncidencia implements Grafo {
 
     @Override
     public void setarPeso(Vertice origem, Vertice destino, double peso) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
+        if (origem.id() < 0 || origem.id() >= this.numVertices || destino.id() < 0 || destino.id() >= this.numVertices) { // caso os vértices não existam
             throw new Exception("Vértice não existe.");
         }
         
-        Aresta aresta = new Aresta(origem, destino, peso); // cria o objeto Aresta com o peso definido
-        for (int i = 0; i < numArestas; i++) { // percorre todas as colunas da matriz
-            if (matriz[destino.id()][i] != null && matriz[destino.id()][i].origem().id() == origem.id()) { // se encontrar a aresta entre origem e destino
-                matriz[destino.id()][i] = aresta; // atualiza o peso da aresta na linha do destino
-                matriz[origem.id()][i] = aresta; // atualiza o peso da aresta na linha da origem
-                break;
+        boolean arestaEncontrada = false; // inicializa a variável de existência da aresta como false
+
+        for (int i = 0; i < arestaAtual; i++) { 
+            Aresta arestaExistente = matriz[origem.id()][i]; // recebe a aresta na linha do vértice de origem
+            if (arestaExistente != null && arestaExistente.destino().id() == destino.id()) {  // verifica se a aresta existe entre origem e destino
+                arestaExistente.setarPeso(peso); // atualiza o peso da aresta
+                arestaEncontrada = true; // atualiza a variável para true
             }
+        }
+        if (!arestaEncontrada) {
+            this.adicionarAresta(origem, destino, peso); // adiciona a aresta caso não tenha sido encontrada
         }
     }
 
     @Override
     public ArrayList<Aresta> arestasEntre(Vertice origem, Vertice destino) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
+        if (origem.id() < 0 || origem.id() >= this.numVertices || destino.id() < 0 || destino.id() >= this.numVertices) { // caso os vértices não existam
             throw new Exception("Vértice não existe.");
         }
         ArrayList<Aresta> arestas = new ArrayList<>(); // inicializa a lista de arestas entre os vértices origem e destino
-        for (int i = 0; i < numArestas; i++) {
-            if (matriz[origem.id()][i] != null && matriz[origem.id()][i].destino().id() == destino.id()) { // se existir aresta de origem para destino
-                Aresta aresta = new Aresta(origem, destino, matriz[origem.id()][i].peso());  // cria o objeto Aresta com o peso definido
-                arestas.add(aresta); // adiciona a aresta na lista
-
-                // Aresta aresta2 = new Aresta(destino, origem, matriz[origem.id()][i].peso());
-                // arestas.add(aresta2);
+        for (int i = 0; i < this.arestaAtual; i++) {
+            Aresta arestaExistente = this.matriz[origem.id()][i]; // recebe a aresta na linha do vértice de origem
+           if (arestaExistente != null && arestaExistente.destino().id() == destino.id()) { // verifica se a aresta existe entre origem e destino
+                arestas.add(arestaExistente);  // adiciona a aresta na lista de arestas entre os vértices
             }
         }
         return arestas;
@@ -138,7 +136,7 @@ public class MatrizDeIncidencia implements Grafo {
     @Override
     public ArrayList<Vertice> vertices(){
         ArrayList<Vertice> vertices = new ArrayList<>(); // inicializa a lista de vértices
-        for (int i = 0; i < numVertices; i++) {  // percorre o número de vértices
+        for (int i = 0; i < this.numVertices; i++) {  // percorre o número de vértices
             vertices.add(new Vertice(i)); // adiciona o vértice à lista
         }
         return vertices;

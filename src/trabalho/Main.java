@@ -90,7 +90,8 @@ public class Main {
             System.out.println("5 - Arvore Geradora Mínima (Kruskal)");
             System.out.println("6 - Caminho Mínimo (Dijkstra)");
             System.out.println("7 - Fluxo Máximo");
-            System.out.println("8 - Sair");
+            System.out.println("8 - Carregar outro grafo");
+            System.out.println("9 - Sair");
             opcao = scanner.nextInt();
 
             switch (opcao) {
@@ -131,6 +132,7 @@ public class Main {
                     for (Vertice vertice : grafo.vertices()) {
                         System.out.print(vertice.id() + " ");
                     }
+                    System.out.println("");
                     int verticeInicial = scanner.nextInt();
                     if (verticeInicial < 0 || verticeInicial >= grafo.numeroDeVertices()) {
                         System.out.println("Vértice inválido. Tente novamente.");
@@ -175,14 +177,14 @@ public class Main {
                         }
                     }
                     if(componentes.numeroDeVertices() == 1){
-                        System.out.println("O grafo original é fortemente conexo.");
+                        System.out.println("O grafo original é fortemente conexo.");    
                     }else{
                         System.out.println("O grafo original não é fortemente conexo.");
                     }
                 }
                 case 5 -> {
                     ArrayList<Aresta> resultado = new ArrayList<>(algoritmos.arvoreGeradoraMinima(grafo));
-                    if(resultado.isEmpty()){
+                    if(resultado.isEmpty() || resultado.size() != grafo.numeroDeVertices() - 1){
                         System.out.println("O grafo não possui árvore geradora mínima.");
                         break;
                     }
@@ -212,6 +214,7 @@ public class Main {
                     for (Vertice vertice : grafo.vertices()) {
                         System.out.print(vertice.id() + " ");
                     }
+                    System.out.println("");
                     int verticeInicial = scanner.nextInt();
                     if (verticeInicial < 0 || verticeInicial >= grafo.numeroDeVertices()) {
                         System.out.println("Vértice inválido. Tente novamente.");
@@ -222,6 +225,7 @@ public class Main {
                     for (Vertice vertice : grafo.vertices()) {
                         System.out.print(vertice.id() + " ");
                     }
+                    System.out.println("");
                     int verticeDestino = scanner.nextInt();
                     if (verticeDestino < 0 || verticeDestino >= grafo.numeroDeVertices()) {
                         System.out.println("Vértice inválido. Tente novamente.");
@@ -252,6 +256,7 @@ public class Main {
                     for (Vertice vertice : grafo.vertices()) {
                         System.out.print(vertice.id() + " ");
                     }
+                    System.out.println("");
                     int verticeInicial = scanner.nextInt();
                     if (verticeInicial < 0 || verticeInicial >= grafo.numeroDeVertices()) {
                         System.out.println("Vértice inválido. Tente novamente.");
@@ -262,6 +267,7 @@ public class Main {
                     for (Vertice vertice : grafo.vertices()) {
                         System.out.print(vertice.id() + " ");
                     }
+                    System.out.println("");
                     int verticeDestino = scanner.nextInt();
                     if (verticeDestino < 0 || verticeDestino >= grafo.numeroDeVertices()) {
                         System.out.println("Vértice inválido. Tente novamente.");
@@ -272,6 +278,59 @@ public class Main {
                     System.out.println("Fluxo Máximo entre os vértices " + verticeInicial + " e " + verticeDestino + ": " + custoMaximo);
                 }
                 case 8 -> {
+                    opcao = 0;
+                    while (opcao == 0) {
+                        System.out.println("1 - Matriz de Adjacência");
+                        System.out.println("2 - Matriz de Incidência");
+                        System.out.println("3 - Lista de Adjacência");
+                        System.out.println("Escolha a representação do grafo:");
+                        opcao = scanner.nextInt();
+                        switch (opcao) {
+                            case 1 -> {
+                                try {
+                                    grafo = algoritmos.carregarGrafo("CarregarGrafo/Grafo.txt", TipoDeRepresentacao.MATRIZ_DE_ADJACENCIA);
+                                    System.out.println("Grafo carregado com sucesso usando Matriz de Adjacência!");
+                                    break;
+                                } catch (Exception e) {
+                                    System.out.println("Erro ao carregar o grafo usando Matriz de Adjacência: " + e.getMessage());
+                                }
+                            }
+                            case 2 -> {
+                                try {
+                                    grafo = algoritmos.carregarGrafo("CarregarGrafo/Grafo.txt", TipoDeRepresentacao.MATRIZ_DE_INCIDENCIA);
+                                    System.out.println("Grafo carregado com sucesso usando Matriz de Incidência!");
+                                    break;
+                                } catch (Exception e) {
+                                    System.out.println("Erro ao carregar o grafo usando Matriz de Incidência: " + e.getMessage());
+                                }
+                            }
+                            case 3 -> {
+                                try {
+                                    grafo = algoritmos.carregarGrafo("CarregarGrafo/Grafo.txt", TipoDeRepresentacao.LISTA_DE_ADJACENCIA);
+                                    System.out.println("Grafo carregado com sucesso usando Lista de Adjacência!");
+                                    break;
+                                } catch (Exception e) {
+                                    System.out.println("Erro ao carregar o grafo usando Lista de Adjacência: " + e.getMessage());
+                                }
+                            }
+                            default -> {
+                                System.out.println("Opção inválida. Tente novamente."); 
+                                opcao = 0;
+                            }
+                        }
+                    }
+
+                    if(grafo == null){
+                        System.out.println("Não foi possível carregar o grafo.");
+                    }else{
+                        System.out.println("Quantidade de vértices: " + grafo.numeroDeVertices());
+                        System.out.println("Quantidade de arestas: " + grafo.numeroDeArestas());
+                        System.out.println("");
+                        System.out.println("==========================================================");
+                        System.out.println("");
+                    }   
+                }
+                case 9 -> {
                     System.out.println("Encerrando o programa.");
                     scanner.close();
                     return;
