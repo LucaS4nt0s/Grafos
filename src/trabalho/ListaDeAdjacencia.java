@@ -41,7 +41,7 @@ public class ListaDeAdjacencia implements Grafo{
     @Override
     public boolean existeAresta(Vertice origem, Vertice destino){
         for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem
-            if (aresta.destino().equals(destino)) { // se encontrar a aresta para o vértice de destino
+            if (aresta.destino().id() == destino.id()) { // se encontrar a aresta para o vértice de destino
                 return true; // retorna true
             }
         }
@@ -88,7 +88,7 @@ public class ListaDeAdjacencia implements Grafo{
             throw new Exception("Vértice não existe.");
         }
         for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem
-            if (aresta.destino().equals(destino)) { // se encontrar a aresta para o vértice de destino
+            if (aresta.destino().id() == destino.id()) { // se encontrar a aresta para o vértice de destino
                 aresta.setarPeso(peso); // seta o peso da aresta
                 return;
             }
@@ -101,8 +101,8 @@ public class ListaDeAdjacencia implements Grafo{
             throw new Exception("Vértice não existe.");
         }
         ArrayList<Aresta> arestas = new ArrayList<>(); // inicializa a lista de arestas entre os vértices origem e destino
-        for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem    
-            if (aresta.destino().equals(destino)) { // se existir aresta de origem para destino
+        for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem
+            if (aresta.destino().id() == destino.id()) { // se existir aresta de origem para destino
                 arestas.add(aresta); // adiciona a aresta na lista
             }
         }
