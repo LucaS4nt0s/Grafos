@@ -88,10 +88,9 @@ public class Main {
             System.out.println("3 - Existe ciclo?");
             System.out.println("4 - Componentes Fortemente Conexos");
             System.out.println("5 - Arvore Geradora Mínima (Kruskal)");
-            System.out.println("6 - Custo da Arvore Geradora Mínima");
-            System.out.println("7 - Caminho Mínimo (Dijkstra)");
-            System.out.println("8 - Fluxo Máximo");
-            System.out.println("9 - Sair");
+            System.out.println("6 - Caminho Mínimo (Dijkstra)");
+            System.out.println("7 - Fluxo Máximo");
+            System.out.println("8 - Sair");
             opcao = scanner.nextInt();
 
             switch (opcao) {
@@ -194,8 +193,7 @@ public class Main {
                     System.out.println("");
                     System.out.println("==========================================================");
                     System.out.println("");
-                }
-                case 6 -> {
+
                     try {
                         double custo = algoritmos.custoDaArvoreGeradora(grafo, algoritmos.arvoreGeradoraMinima(grafo));
                         if(custo == Double.MAX_VALUE){
@@ -208,7 +206,7 @@ public class Main {
                         break;
                     }
                 }
-                case 7 -> {
+                case 6 -> {
                     System.out.println("Para o cálculo do caminho mínimo, insira o vértice de origem:");
                     System.out.println("Vértices disponíveis:");
                     for (Vertice vertice : grafo.vertices()) {
@@ -248,7 +246,7 @@ public class Main {
                         System.out.println("Erro ao calcular o custo do caminho mínimo: " + e.getMessage());
                     }
                 }
-                case 8 -> {
+                case 7 -> {
                     System.out.println("Para o cálculo do fluxo máximo, insira o vértice de origem:");
                     System.out.println("Vértices disponíveis:");
                     for (Vertice vertice : grafo.vertices()) {
@@ -273,7 +271,7 @@ public class Main {
                     double custoMaximo = algoritmos.fluxoMaximo(grafo, new Vertice(verticeInicial), new Vertice(verticeDestino));
                     System.out.println("Fluxo Máximo entre os vértices " + verticeInicial + " e " + verticeDestino + ": " + custoMaximo);
                 }
-                case 9 -> {
+                case 8 -> {
                     System.out.println("Encerrando o programa.");
                     scanner.close();
                     return;

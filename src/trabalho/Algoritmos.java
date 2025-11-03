@@ -378,7 +378,6 @@ public class Algoritmos implements AlgoritmosEmGrafos {
     @Override
     public Collection<Aresta> arvoreGeradoraMinima(Grafo g) {
         Collection<ArrayList<Vertice>> conjuntoVerticesAGM = new ArrayList<>(); // conjunto de vértices da árvore geradora mínima
-        Collection<Aresta> arestasOrdenadasAGM; // conjunto ordenado de arestas da árvore geradora mínima
         Collection<Aresta> arestasX = new ArrayList<>(); // conjunto de arestas finais da árvore geradora mínima
 
         for (Vertice v : g.vertices()) { // para cada vértice do grafo
@@ -387,28 +386,20 @@ public class Algoritmos implements AlgoritmosEmGrafos {
             conjuntoVerticesAGM.add(novoConjunto); // adiciona o novo conjunto à coleção de conjuntos
         }
 
-        arestasOrdenadasAGM = todasAsArestas(g); // armazena todas as arestas do grafo na lista
-        arestasOrdenadasAGM.stream().sorted((a1, a2) -> Double.compare(a1.peso(), a2.peso())); // ordena as arestas pelo peso
+        ArrayList<Aresta> arestasOrdenadasAGM = new ArrayList<>(todasAsArestas(g)); // obtém todas as arestas do grafo
+        arestasOrdenadasAGM.sort((a1, a2) -> Double.compare(a1.peso(), a2.peso())); // ordena as arestas pelo peso em ordem crescente   
 
         for (Aresta a : arestasOrdenadasAGM) { // para cada aresta na lista ordenada
-            ArrayList<Vertice> conjuntoU = null; // conjunto do vértice origem
-            ArrayList<Vertice> conjuntoV = null; // conjunto do vértice destino
+            ArrayList<Vertice> conjuntoU = encontrarConjuntoPorID(conjuntoVerticesAGM, a.origem().id()); // encontra o conjunto do vértice de origem
+            ArrayList<Vertice> conjuntoV = encontrarConjuntoPorID(conjuntoVerticesAGM, a.destino().id()); // encontra o conjunto do vértice de destino
 
-            for (ArrayList<Vertice> conjunto : conjuntoVerticesAGM) { // para cada conjunto de vértices
-                if (conjunto.contains(a.origem())) { // se o conjunto contém o vértice origem
-                    conjuntoU = conjunto; // atribui o conjunto ao conjuntoU
+            if (conjuntoU != conjuntoV) { // se os conjuntos forem diferentes, adiciona a aresta à árvore geradora mínima
+                arestasX.add(a); // adiciona a aresta ao conjunto final
+                
+                if(conjuntoU != null && conjuntoV != null) { // verifica se os conjuntos não são nulos
+                    conjuntoU.addAll(conjuntoV);  // une os dois conjuntos
                 }
-                if (conjunto.contains(a.destino())) { // se o conjunto contém o vértice destino
-                    conjuntoV = conjunto; // atribui o conjunto ao conjuntoV
-                }
-            }
-
-            if (conjuntoU != conjuntoV) { // se os conjuntos são diferentes, a aresta pode ser adicionada à árvore geradora mínima
-                arestasX.add(a); // adiciona a aresta à lista final de arestas da árvore geradora mínima
-                if(conjuntoU != null && conjuntoV != null) {
-                    conjuntoU.addAll(conjuntoV); // une os dois conjuntos caso não sejam nulos
-                }
-                conjuntoVerticesAGM.remove(conjuntoV); // remove o conjuntoV da coleção de conjuntos
+                conjuntoVerticesAGM.remove(conjuntoV);  // remove o conjuntoV da coleção de conjuntos
             }
         }
         return arestasX;
@@ -426,6 +417,17 @@ public class Algoritmos implements AlgoritmosEmGrafos {
             custoTotal += a.peso(); // soma o peso da aresta ao custo total
         }
         return custoTotal; // retorna o custo total da árvore geradora mínima
+    }
+
+    private ArrayList<Vertice> encontrarConjuntoPorID(Collection<ArrayList<Vertice>> conjuntos, int id) {
+        for (ArrayList<Vertice> conjunto : conjuntos) { // para cada conjunto de vértices
+            for (Vertice v : conjunto) { // para cada vértice no conjunto
+                if (v.id() == id) { // se o ID do vértice corresponde ao ID procurado
+                    return conjunto; // retorna o conjunto encontrado
+                }
+            }
+        }
+        return null; // não encontrou o conjunto
     }
 
     @Override
