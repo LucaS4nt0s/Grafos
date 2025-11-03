@@ -10,24 +10,15 @@ public class MatrizDeAdjacencia implements Grafo {
 
     private final double[][] matriz; // define a matriz de adjacência do grafo como final e privada
     private final int numVertices; // define o número de vértices do grafo como final e privado
-    private final double[][] matrizTransposta; // define a matriz transposta do grafo como final e privada
 
     public MatrizDeAdjacencia(int numVertices) { // construtor que inicializa a matriz de adjacência
         this.numVertices = numVertices; // armazena o número de vértices
         this.matriz = new double[numVertices][numVertices]; // cria a matriz de adjacência com o tamanho V x V
-        this.matrizTransposta = new double[numVertices][numVertices]; // cria a matriz transposta com o tamanho V x V
 
         // Inicializa a matriz com infinito
         for (int i = 0; i < this.numVertices; i++) {
             for (int j = 0; j < this.numVertices; j++) {
                 this.matriz[i][j] = Double.MAX_VALUE; // representa ausência de aresta para não interferir nos pesos
-            }
-        }
-
-        // Inicializa a matriz transposta com infinito
-        for (int i = 0; i < this.numVertices; i++) {
-            for (int j = 0; j < this.numVertices; j++) {
-                this.matrizTransposta[i][j] = Double.MAX_VALUE; // representa ausência de aresta para não interferir nos pesos
             }
         }
     }

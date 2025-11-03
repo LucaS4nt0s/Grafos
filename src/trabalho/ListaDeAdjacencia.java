@@ -9,43 +9,40 @@ import grafos.Vertice;
 
 public class ListaDeAdjacencia implements Grafo{
 
-    private final ArrayList<ArrayList<Aresta>> adjacencias;
-    private final int numVertices;
+    private final ArrayList<ArrayList<Aresta>> adjacencias; // lista de adjacências representando o grafo
+    private final int numVertices; // número de vértices no grafo
 
-    public ListaDeAdjacencia(int numeroDeVertices) {
-        this.numVertices = numeroDeVertices;
-        adjacencias = new ArrayList<>(numVertices);
-        for (int i = 0; i < numVertices; i++) {
-            adjacencias.add(new ArrayList<>());
+    public ListaDeAdjacencia(int numeroDeVertices) { 
+        this.numVertices = numeroDeVertices; // inicializa o número de vértices
+        adjacencias = new ArrayList<>(numVertices); // cria a lista de adjacências
+        for (int i = 0; i < numVertices; i++) { 
+            adjacencias.add(new ArrayList<>());  // inicializa a lista de adjacências para cada vértice
         }
     }
     @Override
     public void adicionarAresta(Vertice origem, Vertice destino) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) {
-            throw new Exception("Vértice não existe.");
+        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
+            throw new Exception("Vértice não existe."); // lança uma exceção
         }
-        Aresta aresta = new Aresta(origem, destino);
-        adjacencias.get(origem.id()).add(aresta);
+        Aresta aresta = new Aresta(origem, destino); // cria o objeto Aresta sem peso definido
+        adjacencias.get(origem.id()).add(aresta); // adiciona a aresta na lista de adjacências do vértice de origem
     }
 
     @Override
     public void adicionarAresta(Vertice origem, Vertice destino, double peso) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) {
-            throw new Exception("Vértice não existe.");
+        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
+            throw new Exception("Vértice não existe."); 
         }
-        if (peso < 0) {
-            throw new Exception("Peso inválido.");
-        }
-        Aresta aresta = new Aresta(origem, destino, peso);
-        adjacencias.get(origem.id()).add(aresta);
+        Aresta aresta = new Aresta(origem, destino, peso); // cria o objeto Aresta com o peso definido
+        adjacencias.get(origem.id()).add(aresta); // adiciona a aresta na lista de adjacências do vértice de origem
     }
     
 
     @Override
     public boolean existeAresta(Vertice origem, Vertice destino){
-        for (Aresta aresta : adjacencias.get(origem.id())) {
-            if (aresta.destino().equals(destino)) {
-                return true;
+        for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem
+            if (aresta.destino().equals(destino)) { // se encontrar a aresta para o vértice de destino
+                return true; // retorna true
             }
         }
         return false;
@@ -53,10 +50,10 @@ public class ListaDeAdjacencia implements Grafo{
 
     @Override
     public int grauDoVertice(Vertice vertice) throws Exception{
-        if (vertice.id() < 0 || vertice.id() >= numVertices) {
-            throw new Exception("Vértice não existe.");
+        if (vertice.id() < 0 || vertice.id() >= numVertices) { // caso o vértice não exista
+            throw new Exception("Vértice não existe."); // lança uma exceção
         }
-        return adjacencias.get(vertice.id()).size();
+        return adjacencias.get(vertice.id()).size(); // retorna o tamanho da lista de adjacências do vértice
     }
 
     @Override
@@ -67,35 +64,32 @@ public class ListaDeAdjacencia implements Grafo{
     @Override
     public int numeroDeArestas(){
         int count = 0;
-        for (ArrayList<Aresta> lista : adjacencias) {
-            count += lista.size();
+        for (ArrayList<Aresta> lista : adjacencias) { // percorre todas as listas de adjacências
+            count += lista.size(); // soma o tamanho de cada lista ao contador
         }
         return count;
     }
 
     @Override
     public ArrayList<Vertice> adjacentesDe(Vertice vertice) throws Exception{
-        if (vertice.id() < 0 || vertice.id() >= numVertices) {
+        if (vertice.id() < 0 || vertice.id() >= numVertices) { // caso o vértice não exista
             throw new Exception("Vértice não existe.");
         }
-        ArrayList<Vertice> adjacentes = new ArrayList<>();
-        for (Aresta aresta : adjacencias.get(vertice.id())) {
-            adjacentes.add(aresta.destino());
+        ArrayList<Vertice> adjacentes = new ArrayList<>(); // inicializa a lista de vértices adjacentes
+        for (Aresta aresta : adjacencias.get(vertice.id())) { // percorre a lista de adjacências do vértice
+            adjacentes.add(aresta.destino()); // adiciona o vértice de destino à lista de adjacentes
         }
         return adjacentes;
     }
 
     @Override
     public void setarPeso(Vertice origem, Vertice destino, double peso) throws Exception{
-        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) {
+        if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) { // caso os vértices não existam
             throw new Exception("Vértice não existe.");
         }
-        if (peso < 0) {
-            throw new Exception("Peso inválido.");
-        }
-        for (Aresta aresta : adjacencias.get(origem.id())) {
-            if (aresta.destino().equals(destino)) {
-                aresta.setarPeso(peso);
+        for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem
+            if (aresta.destino().equals(destino)) { // se encontrar a aresta para o vértice de destino
+                aresta.setarPeso(peso); // seta o peso da aresta
                 return;
             }
         }
@@ -106,10 +100,10 @@ public class ListaDeAdjacencia implements Grafo{
         if (origem.id() < 0 || origem.id() >= numVertices || destino.id() < 0 || destino.id() >= numVertices) {
             throw new Exception("Vértice não existe.");
         }
-        ArrayList<Aresta> arestas = new ArrayList<>();
-        for (Aresta aresta : adjacencias.get(origem.id())) {
-            if (aresta.destino().equals(destino)) {
-                arestas.add(aresta);
+        ArrayList<Aresta> arestas = new ArrayList<>(); // inicializa a lista de arestas entre os vértices origem e destino
+        for (Aresta aresta : adjacencias.get(origem.id())) { // percorre a lista de adjacências do vértice de origem    
+            if (aresta.destino().equals(destino)) { // se existir aresta de origem para destino
+                arestas.add(aresta); // adiciona a aresta na lista
             }
         }
         return arestas;
@@ -117,9 +111,9 @@ public class ListaDeAdjacencia implements Grafo{
     
     @Override
     public ArrayList<Vertice> vertices(){
-        ArrayList<Vertice> vertices = new ArrayList<>();
-        for (int i = 0; i < numVertices; i++) {
-            vertices.add(new Vertice(i));
+        ArrayList<Vertice> vertices = new ArrayList<>(); // inicializa a lista de vértices
+        for (int i = 0; i < numVertices; i++) { // percorre o número de vértices
+            vertices.add(new Vertice(i)); // adiciona o vértice na lista
         }
         return vertices;
     }

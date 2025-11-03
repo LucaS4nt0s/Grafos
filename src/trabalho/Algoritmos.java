@@ -126,7 +126,7 @@ public class Algoritmos implements AlgoritmosEmGrafos {
                 buscaEmProfundidadeVisitar(u, g); // chama o método de visita
             }
         }
-
+        
         return this.arestasDeArvore; // retorna as arestas de árvore como resultado da busca em profundidade
     }
 
@@ -137,22 +137,31 @@ public class Algoritmos implements AlgoritmosEmGrafos {
 
         try { // tenta percorrer os vértices adjacentes (tratamento de exceção necessário para a função adjacentesDe)
             for (Vertice v : grafo.adjacentesDe(u)){ // para cada vértice adjacente
+                double pesoAresta = 0; // inicializa o peso da aresta
+                try {
+                    ArrayList<Aresta> arestasEntre = grafo.arestasEntre(u, v); // obtém as arestas entre os dois vértices
+                    for (Aresta a : arestasEntre) {
+                        pesoAresta += a.peso(); // soma os pesos das arestas entre os dois vértices
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
                 switch (this.corDFS[v.id()]) { // verifica a cor do vértice adjacente
                     case BRANCO -> { // se a cor for branco, é uma aresta de árvore
                         buscaEmProfundidadeVisitar(v, grafo); // chama recursivamente a função para visitar o vértice adjacente
-                        Aresta arestaDeArvore = new Aresta(u, v); // cria a aresta de árvore
+                        Aresta arestaDeArvore = new Aresta(u, v, pesoAresta); // cria a aresta de árvore
                         arestasDeArvore.add(arestaDeArvore); // adiciona a aresta de árvore à coleção
                     }
                     case CINZA -> { // se a cor for cinza, é uma aresta de retorno
-                        Aresta arestaDeRetorno = new Aresta(u, v); // cria a aresta de retorno
+                        Aresta arestaDeRetorno = new Aresta(u, v, pesoAresta); // cria a aresta de retorno
                         arestasDeRetorno.add(arestaDeRetorno); // adiciona a aresta de retorno à coleção
                     }
                     case PRETO -> { // se a cor for preto, pode ser aresta de avanço ou de cruzamento
                         if ((this.distanciaDFS[u.id()] < this.distanciaDFS[v.id()])) { // se o tempo de descoberta de u for menor que o de v, é uma aresta de avanço
-                            Aresta arestaDeAvanco = new Aresta(u, v); // cria a aresta de avanço
+                            Aresta arestaDeAvanco = new Aresta(u, v, pesoAresta); // cria a aresta de avanço
                             arestasDeAvanco.add(arestaDeAvanco); // adiciona a aresta de avanço à coleção
                         } else { // caso contrário, é uma aresta de cruzamento
-                            Aresta arestaDeCruzamento = new Aresta(u, v); // cria a aresta de cruzamento
+                            Aresta arestaDeCruzamento = new Aresta(u, v, pesoAresta); // cria a aresta de cruzamento
                             arestasDeCruzamento.add(arestaDeCruzamento); // adiciona a aresta de cruzamento à coleção
                         }
                     }
@@ -229,7 +238,16 @@ public class Algoritmos implements AlgoritmosEmGrafos {
                         this.distanciaBFS[v.id()] = this.distanciaBFS[u.id()] + 1; // define a distância do vértice adjacente
                         this.paiBFS[v.id()] = u; // define o pai do vértice adjacente
                         this.filaBFS.add(v); // adiciona o vértice adjacente à fila
-                        this.arestasDaBuscaEmLargura.add(new Aresta(u, v)); // adiciona a aresta à coleção de arestas da busca em largura
+                        try {
+                            ArrayList<Aresta> arestasEntre = g.arestasEntre(u, v); // obtém as arestas entre os dois vértices
+                            double pesoAresta = 0; // inicializa o peso da aresta
+                            for (Aresta a : arestasEntre) {
+                                pesoAresta += a.peso(); // soma os pesos das arestas entre os dois vértices
+                            }
+                            this.arestasDaBuscaEmLargura.add(new Aresta(u, v, pesoAresta)); // adiciona a aresta à coleção de arestas da busca em largura
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
+                        }
                     }
                 }
             } catch (Exception e) {

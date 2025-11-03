@@ -12,25 +12,16 @@ public class MatrizDeIncidencia implements Grafo {
     private final int numVertices; // define o número de vértices do grafo como final e privado
     private final int numArestas; // define o número de arestas do grafo como final e privado
     private int arestaAtual = 0; // contador para rastrear a próxima coluna disponível na matriz
-    private final Aresta[][] matrizTransposta; // define a matriz transposta do grafo como final e privada
 
     public MatrizDeIncidencia(int numVertices, int numArestas) { // construtor que inicializa a matriz de incidência
         this.numVertices = numVertices;  // armazena o número de vértices
         this.numArestas = numArestas; // armazena o número de arestas
         matriz = new Aresta[numVertices][numArestas]; // cria a matriz de incidência com o tamanho V x A
-        matrizTransposta = new Aresta[numArestas][numVertices]; // cria a matriz transposta com o tamanho A x V
 
         // Inicializa a matriz com infinito
         for (int i = 0; i < numVertices; i++) {
             for (int j = 0; j < numArestas; j++) {
                 matriz[i][j] = null;
-            }
-        }
-
-        // Inicializa a matriz transposta com infinito
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numArestas; j++) {
-                matrizTransposta[i][j] = null;
             }
         }
     }
